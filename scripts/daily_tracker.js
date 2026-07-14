@@ -12,13 +12,12 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Define categories to track
 const CATEGORIES = [
-  gplay.category.GAME_ACTION,
-  gplay.category.GAME_CASUAL,
-  gplay.category.GAME_PUZZLE,
-  gplay.category.GAME_RACING,
-  gplay.category.GAME_SIMULATION
+  'GAME_ACTION',
+  'GAME_CASUAL',
+  'GAME_PUZZLE',
+  'GAME_RACING',
+  'GAME_SIMULATION'
 ];
 
 const NUM_APPS_PER_CATEGORY = 50;
@@ -31,7 +30,7 @@ async function trackApps() {
     try {
       const topApps = await gplay.list({
         category: category,
-        collection: gplay.collection.TOP_FREE,
+        collection: 'TOP_FREE',
         num: NUM_APPS_PER_CATEGORY
       });
 
