@@ -6,13 +6,20 @@ export async function GET(request: Request) {
   const appId = searchParams.get('appId');
 
   if (!appId) {
-    return NextResponse.json({ success: false, error: 'No appId provided' }, { status: 400 });
+    return NextResponse.json({ success: false, error: 'appId is required' });
   }
 
   try {
-    const app = await gplay.app({ appId });
-    return NextResponse.json({ success: true, data: app });
+    const details = await gplay.app({ appId });
+    return NextResponse.json({
+      success: true,
+      data: {
+        installs: details.installs,
+        score: details.score,
+        ratings: details.ratings,
+      }
+    });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: error.message });
   }
 }

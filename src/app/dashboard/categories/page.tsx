@@ -1,6 +1,42 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+
+function InstallsFetcher({ appId }: { appId: string }) {
+  const [installs, setInstalls] = useState<string>("Loading...");
+  const ref = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    let fetched = false;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !fetched) {
+          fetched = true;
+          fetch(`/api/app-details?appId=${appId}`)
+            .then(res => res.json())
+            .then(data => {
+              if (data.success && data.data.installs) {
+                setInstalls(data.data.installs);
+              } else {
+                setInstalls("N/A");
+              }
+            })
+            .catch(() => setInstalls("N/A"));
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "100px" }
+    );
+
+    observer.observe(ref.current);
+
+    return () => observer.disconnect();
+  }, [appId]);
+
+  return <span ref={ref}>{installs}</span>;
+}
 
 const gameCategories = [
   "All Games", "Action", "Adventure", "Arcade", "Board", "Card", "Casino", "Casual",
@@ -304,8 +340,8 @@ export default function CategoriesPage() {
                       <div style={{fontWeight: "bold", color: "#4f46e5", fontSize: "0.95rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>{app.title}</div>
                       <div style={{color: "#64748b", fontSize: "0.8rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>{app.developer} +</div>
                     </div>
-                    <div style={{width: "70px", textAlign: "right", color: "#64748b", fontSize: "0.85rem"}}>
-                      {app.installsText}
+                    <div style={{width: "80px", textAlign: "right", color: "#64748b", fontSize: "0.85rem"}}>
+                      <InstallsFetcher appId={app.appId} />
                     </div>
                   </div>
                 ))}
@@ -342,8 +378,8 @@ export default function CategoriesPage() {
                       <div style={{fontWeight: "bold", color: "#4f46e5", fontSize: "0.95rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>{app.title}</div>
                       <div style={{color: "#64748b", fontSize: "0.8rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>{app.developer} +</div>
                     </div>
-                    <div style={{width: "70px", textAlign: "right", color: "#64748b", fontSize: "0.85rem"}}>
-                      {app.installsText}
+                    <div style={{width: "80px", textAlign: "right", color: "#64748b", fontSize: "0.85rem"}}>
+                      <InstallsFetcher appId={app.appId} />
                     </div>
                   </div>
                 ))}
@@ -381,8 +417,8 @@ export default function CategoriesPage() {
                       <div style={{fontWeight: "bold", color: "#4f46e5", fontSize: "0.95rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>{app.title}</div>
                       <div style={{color: "#64748b", fontSize: "0.8rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>{app.developer} +</div>
                     </div>
-                    <div style={{width: "70px", textAlign: "right", color: "#64748b", fontSize: "0.85rem"}}>
-                      {app.installsText}
+                    <div style={{width: "80px", textAlign: "right", color: "#64748b", fontSize: "0.85rem"}}>
+                      <InstallsFetcher appId={app.appId} />
                     </div>
                   </div>
                 ))}
