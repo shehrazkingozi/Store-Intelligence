@@ -1,11 +1,19 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, useRef, Suspense, useMemo } from "react";
-import { Play, Bookmark, Apple } from "lucide-react";
+import { Bookmark, Apple } from "lucide-react";
+
+// Google Play Icon SVG component
+const GooglePlayIcon = () => (
+  <svg viewBox="0 0 48 48" width="18" height="18">
+    <path fill="#4caf50" d="M37.9,21.8l-23.7-13.6c-1.3-0.8-2.9-0.8-4.2,0C8.7,9,8,10.2,8,11.5v25c0,1.3,0.7,2.5,2,3.3 c0.7,0.4,1.4,0.6,2.1,0.6c0.7,0,1.4-0.2,2.1-0.6l23.7-13.6c1.3-0.8,2-2.1,2-3.3C39.9,23.9,39.2,22.6,37.9,21.8z"/>
+    <path fill="#388e3c" d="M10,11.5c0-1.3,0.7-2.5,2-3.3C10.7,9,10,10.2,10,11.5v25c0,1.3,0.7,2.5,2,3.3C10.7,39,10,37.8,10,36.5V11.5z"/>
+  </svg>
+);
 
 function formatInstalls(num: number | string) {
-  if (!num) return "N/A";
+  if (!num || num === "N/A" || num === "N/A (iOS)") return "N/A";
   let n = typeof num === 'string' ? parseInt(num.toString().replace(/[^0-9]/g, '')) : num;
   if (isNaN(n) || n === 0) return num.toString();
 
@@ -25,7 +33,7 @@ function formatInstalls(num: number | string) {
 }
 
 function parseInstallsRaw(num: number | string) {
-  if (!num) return 0;
+  if (!num || num === "N/A" || num === "N/A (iOS)") return 0;
   let n = typeof num === 'string' ? parseInt(num.toString().replace(/[^0-9]/g, '')) : num;
   return isNaN(n) ? 0 : n;
 }
@@ -49,6 +57,7 @@ function formatDateDisplay(dateStr: string) {
 
 function SearchContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const q = searchParams.get("q") || "";
   
   const [results, setResults] = useState<any[]>([]);
@@ -62,6 +71,42 @@ function SearchContent() {
   const [appDetails, setAppDetails] = useState<Record<string, { installs: string; released: string; rawInstalls: number; rawReleased: number }>>({});
   
   const searchSessionRef = useRef(0);
+  const fetchedAppsRef = useRef(new Set<string>());
+
+  const fetchSingleApp = async (app: any) => {
+    if (fetchedAppsRef.current.has(app.appId)) return;
+    fetchedAppsRef.current.add(app.appId);
+    
+    const store = app.store || 'playstore';
+    try {
+      const res = await fetch(`/api/app-details?appId=${app.appId}&store=${store}`);
+      const resData = await res.json();
+      if (resData.success) {
+        const installsVal = resData.data.maxInstalls || resData.data.installs;
+        const dateVal = resData.data.released || "N/A";
+        
+        setAppDetails(prev => ({
+          ...prev,
+          [app.appId]: {
+            installs: installsVal ? formatInstalls(installsVal) : "N/A",
+            released: dateVal,
+            rawInstalls: parseInstallsRaw(installsVal),
+            rawReleased: parseReleasedRaw(dateVal)
+          }
+        }));
+      } else {
+         setAppDetails(prev => ({
+          ...prev,
+          [app.appId]: { installs: "N/A", released: "N/A", rawInstalls: 0, rawReleased: 0 }
+        }));
+      }
+    } catch (err) {
+      setAppDetails(prev => ({
+          ...prev,
+          [app.appId]: { installs: "N/A", released: "N/A", rawInstalls: 0, rawReleased: 0 }
+      }));
+    }
+  };
 
   useEffect(() => {
     if (!q) {
@@ -72,6 +117,7 @@ function SearchContent() {
     setIsLoading(true);
     setResults([]);
     setAppDetails({});
+    fetchedAppsRef.current.clear();
     searchSessionRef.current += 1;
     const currentSession = searchSessionRef.current;
 
@@ -85,48 +131,8 @@ function SearchContent() {
           // Background queue loading
           for (let i = 0; i < data.data.length; i++) {
             if (searchSessionRef.current !== currentSession) break;
-            
             const app = data.data[i];
-            const store = app.store || 'playstore';
-            
-            try {
-              const res = await fetch(`/api/app-details?appId=${app.appId}&store=${store}`);
-              const resData = await res.json();
-              if (resData.success) {
-                const installsVal = resData.data.maxInstalls || resData.data.installs;
-                const dateVal = resData.data.released || "N/A";
-                
-                setAppDetails(prev => ({
-                  ...prev,
-                  [app.appId]: {
-                    installs: installsVal ? formatInstalls(installsVal) : "N/A",
-                    released: dateVal,
-                    rawInstalls: parseInstallsRaw(installsVal),
-                    rawReleased: parseReleasedRaw(dateVal)
-                  }
-                }));
-              } else {
-                 setAppDetails(prev => ({
-                  ...prev,
-                  [app.appId]: {
-                    installs: "N/A",
-                    released: "N/A",
-                    rawInstalls: 0,
-                    rawReleased: 0
-                  }
-                }));
-              }
-            } catch (err) {
-              setAppDetails(prev => ({
-                  ...prev,
-                  [app.appId]: {
-                    installs: "N/A",
-                    released: "N/A",
-                    rawInstalls: 0,
-                    rawReleased: 0
-                  }
-                }));
-            }
+            await fetchSingleApp(app);
             await new Promise(resolve => setTimeout(resolve, 200));
           }
         } else {
@@ -187,7 +193,7 @@ function SearchContent() {
             onClick={() => setFilter('playstore')}
             style={{ padding: "0.5rem 1rem", borderRadius: "20px", border: "none", cursor: "pointer", fontWeight: 600, background: filter === 'playstore' ? '#10b981' : '#e2e8f0', color: filter === 'playstore' ? 'white' : '#475569', display: "flex", alignItems: "center", gap: "0.4rem" }}
           >
-            <Play size={16} fill={filter === 'playstore' ? 'white' : '#10b981'} stroke={filter === 'playstore' ? 'white' : '#10b981'} />
+            <GooglePlayIcon />
             Google Play ({results.filter(r => r.store !== 'appstore').length})
           </button>
           <button 
@@ -242,11 +248,24 @@ function SearchContent() {
           .app-card {
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            cursor: pointer;
           }
           .app-card:hover {
             transform: scale(1.03);
             box-shadow: 0 8px 16px rgba(0,0,0,0.1) !important;
             z-index: 10;
+          }
+          .action-btn {
+            padding: 6px;
+            border-radius: 8px;
+            background: #f1f5f9;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .action-btn:hover {
+            background: #e2e8f0;
           }
         `}</style>
 
@@ -258,11 +277,30 @@ function SearchContent() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "1.5rem" }}>
             {sortedResults.map((app: any) => {
               const details = appDetails[app.appId];
+              const isAppStore = app.store === 'appstore';
+              const storeUrl = isAppStore 
+                ? `https://apps.apple.com/app/id${app.appId}`
+                : `https://play.google.com/store/apps/details?id=${app.appId}`;
+
+              const dateDisplay = details ? formatDateDisplay(details.released) : "Loading...";
+              const installDisplay = details ? details.installs : "Loading...";
+              
+              const hasDate = dateDisplay !== "N/A" && dateDisplay !== "Loading...";
+              const hasInstalls = installDisplay !== "N/A" && installDisplay !== "N/A (iOS)" && installDisplay !== "Loading...";
+              const showDate = hasDate || (!hasDate && !hasInstalls); // show N/A if both are missing
+              const showInstalls = hasInstalls;
+
               return (
-                <div key={app.appId} className="app-card" style={{ background: "white", borderRadius: "12px", border: "1px solid #e2e8f0", padding: "1.2rem", position: "relative" }}>
+                <div 
+                  key={app.appId} 
+                  className="app-card" 
+                  onMouseEnter={() => fetchSingleApp(app)}
+                  onClick={() => router.push(`/dashboard/app/${app.appId}?store=${app.store || 'playstore'}`)}
+                  style={{ background: "white", borderRadius: "12px", border: "1px solid #e2e8f0", padding: "1.2rem", position: "relative" }}
+                >
                   <div style={{ display: "flex", gap: "1rem" }}>
                     <img src={app.icon} style={{ width: "56px", height: "56px", borderRadius: "12px", objectFit: "cover", flexShrink: 0 }} />
-                    <div style={{ flex: 1, minWidth: 0, paddingRight: "50px" }}>
+                    <div style={{ flex: 1, minWidth: 0, paddingRight: "70px" }}>
                       <div style={{ fontWeight: 600, fontSize: "1rem", color: "#0f172a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{app.title}</div>
                       <div style={{ fontSize: "0.8rem", color: "#64748b", marginTop: "4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {app.developer} • {app.genre || "App"}
@@ -270,24 +308,39 @@ function SearchContent() {
                     </div>
                   </div>
                   
-                  <div style={{ position: "absolute", top: "1.2rem", right: "1.2rem", display: "flex", gap: "0.5rem" }}>
-                    {app.store === 'appstore' ? (
-                      <Apple size={18} fill="#0f172a" stroke="#0f172a" />
-                    ) : (
-                      <Play size={18} fill="#10b981" stroke="#10b981" />
-                    )}
-                    <Bookmark size={18} color="#cbd5e1" style={{ cursor: "pointer" }} />
+                  <div style={{ position: "absolute", top: "1.2rem", right: "1.2rem", display: "flex", gap: "0.4rem" }}>
+                    <a 
+                      href={storeUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="action-btn"
+                      onClick={(e) => e.stopPropagation()}
+                      title={isAppStore ? "View on App Store" : "View on Google Play"}
+                    >
+                      {isAppStore ? (
+                        <Apple size={16} fill="#0f172a" stroke="#0f172a" />
+                      ) : (
+                        <GooglePlayIcon />
+                      )}
+                    </a>
+                    <div className="action-btn" onClick={(e) => { e.stopPropagation(); /* bookmark logic */ }} title="Bookmark">
+                      <Bookmark size={16} color="#94a3b8" />
+                    </div>
                   </div>
 
-                  <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid #f1f5f9", marginTop: "1rem", paddingTop: "0.8rem", fontSize: "0.85rem", color: "#0f172a", textAlign: "center" }}>
-                    <div style={{ flex: 1, borderRight: "1px solid #f1f5f9" }}>
-                      <div style={{ fontWeight: 600 }}>{details ? formatDateDisplay(details.released) : "Loading..."}</div>
-                      <div style={{ color: "#64748b", fontSize: "0.75rem", marginTop: "2px" }}>Released</div>
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 600 }}>{details ? details.installs : "Loading..."}</div>
-                      <div style={{ color: "#64748b", fontSize: "0.75rem", marginTop: "2px" }}>Total Installs</div>
-                    </div>
+                  <div style={{ display: "flex", justifyContent: showInstalls && showDate ? "space-between" : "center", borderTop: "1px solid #f1f5f9", marginTop: "1rem", paddingTop: "0.8rem", fontSize: "0.85rem", color: "#0f172a", textAlign: "center" }}>
+                    {showDate && (
+                      <div style={{ flex: 1, borderRight: showInstalls ? "1px solid #f1f5f9" : "none" }}>
+                        <div style={{ fontWeight: 600 }}>{dateDisplay}</div>
+                        <div style={{ color: "#64748b", fontSize: "0.75rem", marginTop: "2px" }}>Released</div>
+                      </div>
+                    )}
+                    {showInstalls && (
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 600 }}>{installDisplay}</div>
+                        <div style={{ color: "#64748b", fontSize: "0.75rem", marginTop: "2px" }}>Total Installs</div>
+                      </div>
+                    )}
                   </div>
                 </div>
               );

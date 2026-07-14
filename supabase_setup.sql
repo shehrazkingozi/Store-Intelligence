@@ -35,3 +35,19 @@ CREATE TABLE IF NOT EXISTS daily_stats (
 CREATE INDEX IF NOT EXISTS idx_daily_stats_app_id ON daily_stats (app_id);
 -- Index on date for daily analytics across all apps
 CREATE INDEX IF NOT EXISTS idx_daily_stats_date ON daily_stats (date);
+
+-- 4. New Columns for Full App Details
+ALTER TABLE apps ADD COLUMN IF NOT EXISTS description text;
+ALTER TABLE apps ADD COLUMN IF NOT EXISTS screenshots jsonb;
+ALTER TABLE apps ADD COLUMN IF NOT EXISTS similar_apps jsonb;
+
+-- 5. App History Table: Tracks changes to app title and description over time
+CREATE TABLE IF NOT EXISTS app_history (
+  id uuid default gen_random_uuid() primary key,
+  app_id text references apps(app_id) on delete cascade,
+  title text,
+  description text,
+  changed_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+CREATE INDEX IF NOT EXISTS idx_app_history_app_id ON app_history (app_id);
