@@ -9,14 +9,14 @@ export async function GET(request: Request) {
   try {
     const topFree = await gplay.list({
       category: category as any,
-      collection: 'TOP_FREE',
+      collection: 'TOP_FREE' as any,
       num: 100,
       country: country,
     });
 
     const topNewFree = await gplay.list({
       category: category as any,
-      collection: 'TOP_FREE', // NEW_FREE is often deprecated/unstable in GPlay, fallback to TOP_FREE or empty
+      collection: 'TOP_FREE' as any, // NEW_FREE is often deprecated/unstable in GPlay, fallback to TOP_FREE or empty
       num: 20,
       country: country,
     }).catch(() => []);
