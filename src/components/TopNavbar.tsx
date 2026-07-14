@@ -275,18 +275,6 @@ export default function TopNavbar() {
           </button>
         </div>
       </div>
-
-      {/* Green Promo Banner */}
-      <div style={{background: "#10b981", color: "white", padding: "0.5rem 1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.9rem", fontWeight: 500}}>
-        <div style={{display: "flex", alignItems: "center", gap: "0.5rem"}}>
-          <span>🧩</span> Get instant installs, charts & publisher data on any Google Play page — StoreSignal Chrome Extension is free!
-        </div>
-        <div style={{display: "flex", alignItems: "center", gap: "1rem"}}>
-          <button style={{background: "white", color: "#10b981", border: "none", padding: "0.3rem 0.8rem", borderRadius: "4px", fontWeight: "bold", cursor: "pointer"}}>Install Free →</button>
-          <button style={{background: "transparent", border: "none", color: "white", cursor: "pointer"}}>✕</button>
-        </div>
-      </div>
-
     </div>
   );
 }

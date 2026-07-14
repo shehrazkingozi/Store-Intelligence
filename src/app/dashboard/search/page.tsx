@@ -101,8 +101,6 @@ function SearchContent() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#f8fafc", fontFamily: "sans-serif" }}>
-      <TopNavbar />
-
       <main style={{ maxWidth: "1200px", margin: "0 auto", padding: "2rem" }}>
         <div style={{ marginBottom: "2rem" }}>
           <h1 style={{ fontSize: "1.1rem", fontWeight: 500, color: "#64748b" }}>
