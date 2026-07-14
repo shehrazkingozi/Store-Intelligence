@@ -29,7 +29,7 @@ export async function GET(request: Request) {
         num: 120,
         country: "us",
         lang: "en"
-      }).catch(err => {
+      }).catch((err: any) => {
         console.error("Gplay search error for query:", query, err);
         return [];
       })
@@ -40,7 +40,7 @@ export async function GET(request: Request) {
       term: cleanQuery,
       num: 50,
       country: "us"
-    }).catch(err => {
+    }).catch((err: any) => {
       console.error("App Store search error:", err);
       return [];
     });
