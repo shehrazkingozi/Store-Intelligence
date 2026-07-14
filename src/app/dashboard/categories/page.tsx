@@ -225,10 +225,24 @@ export default function CategoriesPage() {
                   <option>Top Free</option>
                 </select>
               </div>
-              <span style={{fontSize: "0.85rem", color: "#64748b"}}>
-                Ordered by frequency · ▲/▼ = average rank movement over the range
-              </span>
+              <div style={{display: "flex", alignItems: "center", gap: "1rem"}}>
+                <span style={{fontSize: "0.85rem", color: "#64748b"}}>
+                  Ordered by frequency · ▲/▼ = average rank movement over the range
+                </span>
+                <button 
+                  onClick={() => setSelectedKeyword(null)} 
+                  style={{padding: "0.3rem 0.8rem", borderRadius: "4px", border: "1px solid #cbd5e1", background: "white", color: "#475569", fontSize: "0.85rem", cursor: "pointer", display: selectedKeyword ? "block" : "none"}}
+                >
+                  Clear Filter
+                </button>
+              </div>
             </div>
+
+            {selectedKeyword && (
+              <div style={{background: "#eff6ff", color: "#60a5fa", padding: "0.5rem 1rem", borderRadius: "4px", marginBottom: "1rem", fontSize: "0.9rem", border: "1px solid #bfdbfe"}}>
+                Filtering Top Free by keyword: "{selectedKeyword}"
+              </div>
+            )}
             
             <div style={{display: "flex", flexWrap: "wrap", gap: "0.5rem"}}>
               {data.keywordCloud?.map((kw: any) => (
@@ -260,8 +274,15 @@ export default function CategoriesPage() {
             
             {/* COLUMN 1: TOP FREE */}
             <div style={{background: "white", borderRadius: "8px", padding: "1.5rem", color: "black", minWidth: "380px", flex: 1, display: "flex", flexDirection: "column"}}>
-              <div style={{display: "flex", justifyContent: "space-between", borderBottom: "1px solid #e2e8f0", paddingBottom: "1rem", marginBottom: "1rem"}}>
-                <h3 style={{margin: 0, fontSize: "1.1rem"}}>Top Free</h3>
+              <div style={{display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "1px solid #e2e8f0", paddingBottom: "1rem", marginBottom: "1rem"}}>
+                <div>
+                  <h3 style={{margin: 0, fontSize: "1.1rem"}}>Top Free</h3>
+                  {selectedKeyword && (
+                    <div style={{background: "#eff6ff", color: "#4f46e5", padding: "0.2rem 0.6rem", borderRadius: "12px", fontSize: "0.75rem", display: "inline-block", marginTop: "0.5rem"}}>
+                      Filtered by: {selectedKeyword}
+                    </div>
+                  )}
+                </div>
                 <span style={{color: "#64748b", fontSize: "0.9rem"}}>{displayedTopFree?.length || 0} items</span>
               </div>
               <div style={{display: "flex", color: "#64748b", fontSize: "0.8rem", fontWeight: "bold", marginBottom: "1rem"}}>
@@ -293,8 +314,15 @@ export default function CategoriesPage() {
 
             {/* COLUMN 2: TOP NEW FREE */}
             <div style={{background: "white", borderRadius: "8px", padding: "1.5rem", color: "black", minWidth: "380px", flex: 1, display: "flex", flexDirection: "column"}}>
-              <div style={{display: "flex", justifyContent: "space-between", borderBottom: "1px solid #e2e8f0", paddingBottom: "1rem", marginBottom: "1rem"}}>
-                <h3 style={{margin: 0, fontSize: "1.1rem"}}>Top New Free</h3>
+              <div style={{display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "1px solid #e2e8f0", paddingBottom: "1rem", marginBottom: "1rem"}}>
+                <div>
+                  <h3 style={{margin: 0, fontSize: "1.1rem"}}>Top New Free</h3>
+                  {selectedKeyword && (
+                    <div style={{background: "#eff6ff", color: "#4f46e5", padding: "0.2rem 0.6rem", borderRadius: "12px", fontSize: "0.75rem", display: "inline-block", marginTop: "0.5rem"}}>
+                      Filtered by: {selectedKeyword}
+                    </div>
+                  )}
+                </div>
                 <span style={{color: "#64748b", fontSize: "0.9rem"}}>{displayedTopNewFree?.length || 0} items</span>
               </div>
               <div style={{display: "flex", color: "#64748b", fontSize: "0.8rem", fontWeight: "bold", marginBottom: "1rem"}}>
