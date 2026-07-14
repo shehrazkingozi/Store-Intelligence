@@ -90,8 +90,24 @@ export async function GET(request: Request) {
     // or sort them by some relevance. Let's just combine and sort by score for a mixed feel.
     let combined = [...finalPlayResults, ...finalIosResults];
     
-    // Simple sort by score (descending) to mix them up naturally
-    combined.sort((a, b) => (b.score || 0) - (a.score || 0));
+    // Calculate Relevance Score
+    const lQuery = cleanQuery.toLowerCase();
+    combined.forEach(app => {
+      let rel = 0;
+      const lTitle = app.title.toLowerCase();
+      if (lTitle === lQuery) rel = 100;
+      else if (lTitle.startsWith(lQuery)) rel = 50;
+      else if (lTitle.includes(lQuery)) rel = 10;
+      app.relevanceScore = rel;
+    });
+
+    // Sort by Relevance, then by app score (rating)
+    combined.sort((a, b) => {
+      if (b.relevanceScore !== a.relevanceScore) {
+        return b.relevanceScore - a.relevanceScore;
+      }
+      return (b.score || 0) - (a.score || 0);
+    });
 
     return NextResponse.json({
       success: true,
