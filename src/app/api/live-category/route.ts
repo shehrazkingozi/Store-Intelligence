@@ -4,9 +4,10 @@ import gplay from 'google-play-scraper';
 const extractKeywords = (apps: any[]) => {
   const stopWords = new Set(['and', 'the', 'in', 'of', 'for', 'to', 'a', 'with', 'on', 'at', 'by', 'from', 'is', 'it', 'as', 'an', 'that', 'this', 'are', 'or', 'be', 'you', 'your', 'my', 'we', 'they', 'but', 'all', 'game', 'games', 'play', 'free', 'app', 'apps', '3d', '2d']);
   const wordCount: Record<string, number> = {};
-  apps.forEach(app => {
-    const words = (app.title || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/);
-    words.forEach(w => {
+  apps.forEach((app: any) => {
+    const titleString: string = app.title || '';
+    const words: string[] = titleString.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/);
+    words.forEach((w: string) => {
       if (w.length > 2 && !stopWords.has(w) && isNaN(Number(w))) {
         wordCount[w] = (wordCount[w] || 0) + 1;
       }
