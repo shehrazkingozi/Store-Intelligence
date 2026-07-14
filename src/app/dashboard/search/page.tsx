@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import TopNavbar from "@/components/TopNavbar";
 
 function formatInstalls(num: number | string) {
@@ -75,7 +75,7 @@ function AppDetailsFetcher({ appId }: { appId: string }) {
   );
 }
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams();
   const q = searchParams.get("q") || "";
   
@@ -149,5 +149,13 @@ export default function SearchPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div style={{ textAlign: "center", padding: "3rem", color: "#64748b" }}>Loading search page...</div>}>
+      <SearchContent />
+    </Suspense>
   );
 }
