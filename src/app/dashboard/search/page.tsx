@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState, useRef, Suspense } from "react";
-import { Play, Bookmark } from "lucide-react";
+import { Play, Bookmark, Apple } from "lucide-react";
 import TopNavbar from "@/components/TopNavbar";
 
 function formatInstalls(num: number | string) {
@@ -25,7 +25,7 @@ function formatInstalls(num: number | string) {
   return `~${n}`;
 }
 
-function AppDetailsFetcher({ appId }: { appId: string }) {
+function AppDetailsFetcher({ appId, store = 'playstore' }: { appId: string, store?: string }) {
   const [data, setData] = useState<{ installs: string, released: string } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -37,7 +37,7 @@ function AppDetailsFetcher({ appId }: { appId: string }) {
       (entries) => {
         if (entries[0].isIntersecting && !fetched) {
           fetched = true;
-          fetch(`/api/app-details?appId=${appId}`)
+          fetch(`/api/app-details?appId=${appId}&store=${store}`)
             .then(res => res.json())
             .then(resData => {
               if (resData.success) {
@@ -137,11 +137,15 @@ function SearchContent() {
                 </div>
                 
                 <div style={{ position: "absolute", top: "1.2rem", right: "1.2rem", display: "flex", gap: "0.5rem" }}>
-                  <Play size={18} fill="#10b981" stroke="#10b981" />
+                  {app.store === 'appstore' ? (
+                    <Apple size={18} fill="#0f172a" stroke="#0f172a" />
+                  ) : (
+                    <Play size={18} fill="#10b981" stroke="#10b981" />
+                  )}
                   <Bookmark size={18} color="#cbd5e1" style={{ cursor: "pointer" }} />
                 </div>
 
-                <AppDetailsFetcher appId={app.appId} />
+                <AppDetailsFetcher appId={app.appId} store={app.store} />
               </div>
             ))}
           </div>
