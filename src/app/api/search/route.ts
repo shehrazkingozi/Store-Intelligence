@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   try {
     const results = await gplay.search({
       term: q,
-      num: 24, // Enough to populate a decent search results page
+      num: 50, // Enough to populate a decent search results page (increased for more results)
     });
 
     const formattedResults = results.map((app: any) => ({

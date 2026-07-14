@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState, useRef, Suspense } from "react";
+import { Play, Bookmark } from "lucide-react";
 import TopNavbar from "@/components/TopNavbar";
 
 function formatInstalls(num: number | string) {
@@ -138,8 +139,8 @@ function SearchContent() {
                 </div>
                 
                 <div style={{ position: "absolute", top: "1.2rem", right: "1.2rem", display: "flex", gap: "0.5rem" }}>
-                  <span style={{ fontSize: "1.1rem" }}>▶️</span>
-                  <span style={{ fontSize: "1.1rem", color: "#cbd5e1", cursor: "pointer" }}>🔖</span>
+                  <Play size={18} fill="#10b981" stroke="#10b981" />
+                  <Bookmark size={18} color="#cbd5e1" style={{ cursor: "pointer" }} />
                 </div>
 
                 <AppDetailsFetcher appId={app.appId} />
