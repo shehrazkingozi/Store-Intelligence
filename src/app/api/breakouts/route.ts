@@ -6,8 +6,8 @@ export async function GET() {
     // For breakouts without historical DB, we can use trending or top grossing games 
     // that are currently getting high velocity.
     const results = await gplay.list({
-      category: gplay.category.GAME,
-      collection: gplay.collection.GROSSING,
+      category: 'GAME',
+      collection: 'GROSSING',
       num: 30,
     });
 
