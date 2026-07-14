@@ -36,6 +36,17 @@ function parseReleasedRaw(dateStr: string) {
   return isNaN(t) ? 0 : t;
 }
 
+function formatDateDisplay(dateStr: string) {
+  if (!dateStr || dateStr === "N/A") return "N/A";
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  } catch (e) {
+    return dateStr;
+  }
+}
+
 function SearchContent() {
   const searchParams = useSearchParams();
   const q = searchParams.get("q") || "";
@@ -227,6 +238,18 @@ function SearchContent() {
           </div>
         </div>
 
+        <style>{`
+          .app-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+          }
+          .app-card:hover {
+            transform: scale(1.03);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1) !important;
+            z-index: 10;
+          }
+        `}</style>
+
         {isLoading ? (
           <div style={{ textAlign: "center", padding: "3rem", color: "#64748b" }}>Loading search results...</div>
         ) : sortedResults.length === 0 ? (
@@ -236,10 +259,10 @@ function SearchContent() {
             {sortedResults.map((app: any) => {
               const details = appDetails[app.appId];
               return (
-                <div key={app.appId} style={{ background: "white", borderRadius: "12px", border: "1px solid #e2e8f0", padding: "1.2rem", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", position: "relative" }}>
+                <div key={app.appId} className="app-card" style={{ background: "white", borderRadius: "12px", border: "1px solid #e2e8f0", padding: "1.2rem", position: "relative" }}>
                   <div style={{ display: "flex", gap: "1rem" }}>
                     <img src={app.icon} style={{ width: "56px", height: "56px", borderRadius: "12px", objectFit: "cover", flexShrink: 0 }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ flex: 1, minWidth: 0, paddingRight: "50px" }}>
                       <div style={{ fontWeight: 600, fontSize: "1rem", color: "#0f172a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{app.title}</div>
                       <div style={{ fontSize: "0.8rem", color: "#64748b", marginTop: "4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {app.developer} • {app.genre || "App"}
@@ -258,7 +281,7 @@ function SearchContent() {
 
                   <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid #f1f5f9", marginTop: "1rem", paddingTop: "0.8rem", fontSize: "0.85rem", color: "#0f172a", textAlign: "center" }}>
                     <div style={{ flex: 1, borderRight: "1px solid #f1f5f9" }}>
-                      <div style={{ fontWeight: 600 }}>{details ? details.released : "Loading..."}</div>
+                      <div style={{ fontWeight: 600 }}>{details ? formatDateDisplay(details.released) : "Loading..."}</div>
                       <div style={{ color: "#64748b", fontSize: "0.75rem", marginTop: "2px" }}>Released</div>
                     </div>
                     <div style={{ flex: 1 }}>
