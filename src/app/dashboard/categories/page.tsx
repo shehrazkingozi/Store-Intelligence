@@ -146,11 +146,11 @@ export default function CategoriesPage() {
   };
 
   const displayedTopFree = selectedKeyword 
-    ? data?.topFree?.filter((app: any) => app.title.toLowerCase().includes(selectedKeyword.toLowerCase()) || app.developer.toLowerCase().includes(selectedKeyword.toLowerCase()))
+    ? data?.topFree?.filter((app: any) => (app?.title || '').toLowerCase().includes(selectedKeyword.toLowerCase()) || (app?.developer || '').toLowerCase().includes(selectedKeyword.toLowerCase()))
     : data?.topFree;
 
   const displayedTopNewFree = selectedKeyword 
-    ? data?.topNewFree?.filter((app: any) => app.title.toLowerCase().includes(selectedKeyword.toLowerCase()) || app.developer.toLowerCase().includes(selectedKeyword.toLowerCase()))
+    ? data?.topNewFree?.filter((app: any) => (app?.title || '').toLowerCase().includes(selectedKeyword.toLowerCase()) || (app?.developer || '').toLowerCase().includes(selectedKeyword.toLowerCase()))
     : data?.topNewFree;
 
   return (
