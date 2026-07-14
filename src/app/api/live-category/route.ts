@@ -1,6 +1,23 @@
 import { NextResponse } from 'next/server';
 import gplay from 'google-play-scraper';
 
+const extractKeywords = (apps: any[]) => {
+  const stopWords = new Set(['and', 'the', 'in', 'of', 'for', 'to', 'a', 'with', 'on', 'at', 'by', 'from', 'is', 'it', 'as', 'an', 'that', 'this', 'are', 'or', 'be', 'you', 'your', 'my', 'we', 'they', 'but', 'all', 'game', 'games', 'play', 'free', 'app', 'apps', '3d', '2d']);
+  const wordCount: Record<string, number> = {};
+  apps.forEach(app => {
+    const words = (app.title || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/);
+    words.forEach(w => {
+      if (w.length > 2 && !stopWords.has(w) && isNaN(Number(w))) {
+        wordCount[w] = (wordCount[w] || 0) + 1;
+      }
+    });
+  });
+  return Object.entries(wordCount)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 30)
+    .map(([word]) => ({ word, movement: 0 }));
+};
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const category = searchParams.get('category') || 'GAME';
@@ -26,30 +43,19 @@ export async function GET(request: Request) {
       title: app.title,
       developer: app.developer,
       icon: app.icon,
-      rankChange: 0, // Mocked since we don't have historical DB in this stateless version
+      rankChange: 0, 
       installsText: app.installs || app.scoreText || "100K+",
     });
 
     const formattedTopFree = topFree.map(formatApp);
-
-    // Mock biggest movers from topFree for demonstration
-    const biggestMovers = formattedTopFree.slice(10, 20).map((app) => ({
-      ...app,
-      rankChange: Math.floor(Math.random() * 20) + 10
-    }));
 
     return NextResponse.json({
       success: true,
       data: {
         topFree: formattedTopFree,
         topNewFree: topNewFree.map(formatApp),
-        biggestMovers: biggestMovers,
-        keywordCloud: [
-          { word: "puzzle", movement: 2 },
-          { word: "multiplayer", movement: 5 },
-          { word: "action", movement: -1 },
-          { word: "strategy", movement: 0 }
-        ]
+        biggestMovers: [],
+        keywordCloud: extractKeywords(topFree)
       }
     });
   } catch (error: any) {
