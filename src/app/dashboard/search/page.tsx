@@ -82,6 +82,7 @@ function SearchContent() {
   
   const [results, setResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [filter, setFilter] = useState<'all' | 'playstore' | 'appstore'>('all');
 
   useEffect(() => {
     if (!q) {
@@ -102,10 +103,30 @@ function SearchContent() {
   return (
     <div style={{ minHeight: "100vh", background: "#f8fafc", fontFamily: "sans-serif" }}>
       <main style={{ maxWidth: "1200px", margin: "0 auto", padding: "2rem" }}>
-        <div style={{ marginBottom: "2rem" }}>
-          <h1 style={{ fontSize: "1.1rem", fontWeight: 500, color: "#64748b" }}>
-            {results.length} results for <span style={{ color: "black", fontWeight: 700 }}>"{q}"</span>
-          </h1>
+        <div style={{ marginBottom: "2rem", display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
+          <button 
+            onClick={() => setFilter('all')}
+            style={{ padding: "0.5rem 1rem", borderRadius: "20px", border: "none", cursor: "pointer", fontWeight: 600, background: filter === 'all' ? '#0f172a' : '#e2e8f0', color: filter === 'all' ? 'white' : '#475569' }}
+          >
+            All ({results.length})
+          </button>
+          <button 
+            onClick={() => setFilter('playstore')}
+            style={{ padding: "0.5rem 1rem", borderRadius: "20px", border: "none", cursor: "pointer", fontWeight: 600, background: filter === 'playstore' ? '#10b981' : '#e2e8f0', color: filter === 'playstore' ? 'white' : '#475569', display: "flex", alignItems: "center", gap: "0.4rem" }}
+          >
+            <Play size={16} fill={filter === 'playstore' ? 'white' : '#10b981'} stroke={filter === 'playstore' ? 'white' : '#10b981'} />
+            Google Play ({results.filter(r => r.store !== 'appstore').length})
+          </button>
+          <button 
+            onClick={() => setFilter('appstore')}
+            style={{ padding: "0.5rem 1rem", borderRadius: "20px", border: "none", cursor: "pointer", fontWeight: 600, background: filter === 'appstore' ? '#0f172a' : '#e2e8f0', color: filter === 'appstore' ? 'white' : '#475569', display: "flex", alignItems: "center", gap: "0.4rem" }}
+          >
+            <Apple size={16} fill={filter === 'appstore' ? 'white' : '#0f172a'} stroke={filter === 'appstore' ? 'white' : '#0f172a'} />
+            App Store ({results.filter(r => r.store === 'appstore').length})
+          </button>
+          <span style={{ fontSize: "1.1rem", fontWeight: 500, color: "#64748b", marginLeft: "1rem" }}>
+            for <span style={{ color: "black", fontWeight: 700 }}>"{q}"</span>
+          </span>
         </div>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", color: "#475569", fontWeight: 600, fontSize: "0.85rem" }}>
@@ -124,7 +145,7 @@ function SearchContent() {
           <div style={{ textAlign: "center", padding: "3rem", color: "#64748b" }}>No results found.</div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "1.5rem" }}>
-            {results.map((app: any) => (
+            {results.filter(app => filter === 'all' || app.store === filter || (!app.store && filter === 'playstore')).map((app: any) => (
               <div key={app.appId} style={{ background: "white", borderRadius: "12px", border: "1px solid #e2e8f0", padding: "1.2rem", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", position: "relative" }}>
                 <div style={{ display: "flex", gap: "1rem" }}>
                   <img src={app.icon} style={{ width: "56px", height: "56px", borderRadius: "12px", objectFit: "cover", flexShrink: 0 }} />
