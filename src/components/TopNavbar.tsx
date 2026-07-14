@@ -164,19 +164,6 @@ export default function TopNavbar() {
         </div>
       </div>
 
-      <style jsx>{`
-        .dropdown-item {
-          display: block;
-          padding: 0.5rem;
-          color: #334155;
-          text-decoration: none;
-          font-size: 0.9rem;
-          border-radius: 4px;
-        }
-        .dropdown-item:hover {
-          background: #f8fafc;
-        }
-      `}</style>
     </div>
   );
 }
