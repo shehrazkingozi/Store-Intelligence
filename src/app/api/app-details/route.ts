@@ -15,6 +15,7 @@ export async function GET(request: Request) {
       success: true,
       data: {
         installs: details.installs,
+        maxInstalls: details.maxInstalls,
         score: details.score,
         ratings: details.ratings,
       }

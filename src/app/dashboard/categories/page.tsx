@@ -2,8 +2,30 @@
 
 import { useState, useEffect, useRef } from "react";
 
+function formatInstalls(num: number | string) {
+  if (!num) return "N/A";
+  
+  let n = typeof num === 'string' ? parseInt(num.toString().replace(/[^0-9]/g, '')) : num;
+  if (isNaN(n) || n === 0) return num.toString();
+
+  if (n >= 1000000000) {
+    let formatted = (n / 1000000000).toFixed(1);
+    return `~${formatted.replace('.0', '')}B`;
+  }
+  if (n >= 1000000) {
+    let formatted = (n / 1000000).toFixed(1);
+    return `~${formatted.replace('.0', '')}M`;
+  }
+  if (n >= 1000) {
+    let formatted = (n / 1000).toFixed(1);
+    return `~${formatted.replace('.0', '')}K`;
+  }
+  
+  return `~${n}`;
+}
+
 function InstallsFetcher({ appId }: { appId: string }) {
-  const [installs, setInstalls] = useState<string>("Loading...");
+  const [installs, setInstalls] = useState<string>("...");
   const ref = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
@@ -17,8 +39,8 @@ function InstallsFetcher({ appId }: { appId: string }) {
           fetch(`/api/app-details?appId=${appId}`)
             .then(res => res.json())
             .then(data => {
-              if (data.success && data.data.installs) {
-                setInstalls(data.data.installs);
+              if (data.success && (data.data.maxInstalls || data.data.installs)) {
+                setInstalls(formatInstalls(data.data.maxInstalls || data.data.installs));
               } else {
                 setInstalls("N/A");
               }
@@ -35,7 +57,7 @@ function InstallsFetcher({ appId }: { appId: string }) {
     return () => observer.disconnect();
   }, [appId]);
 
-  return <span ref={ref}>{installs}</span>;
+  return <span ref={ref} style={{color: "#64748b", fontWeight: 500}}>{installs}</span>;
 }
 
 const gameCategories = [
