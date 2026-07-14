@@ -45,7 +45,7 @@ function SearchContent() {
       return;
     }
     
-    fetch(`http://localhost:8000/api/search?q=${query}`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/search?q=${query}`)
       .then(res => res.json())
       .then(result => {
         if (result.success && result.data) {

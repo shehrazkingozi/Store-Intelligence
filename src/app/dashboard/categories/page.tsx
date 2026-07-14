@@ -119,7 +119,7 @@ export default function CategoriesPage() {
       const gplayCat = categoryMap[catName] || "GAME";
       const gplayCountry = countryCode === "global" ? "us" : countryCode;
       
-      const res = await fetch(`http://localhost:8000/api/live-category?category=${gplayCat}&country=${gplayCountry}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/live-category?category=${gplayCat}&country=${gplayCountry}`);
       const json = await res.json();
       if (json.success) {
         setData(json.data);

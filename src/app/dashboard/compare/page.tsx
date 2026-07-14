@@ -22,8 +22,8 @@ export default function ComparePage() {
     try {
       // Fetch both apps concurrently
       const [res1, res2] = await Promise.all([
-        fetch(`http://localhost:8000/api/extension/app?id=${appId1}`),
-        fetch(`http://localhost:8000/api/extension/app?id=${appId2}`)
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/extension/app?id=${appId1}`),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/extension/app?id=${appId2}`)
       ]);
 
       const d1 = await res1.json();
