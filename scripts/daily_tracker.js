@@ -1,4 +1,4 @@
-const gplay = require('google-play-scraper').default;
+const gplay = require('google-play-scraper');
 const { createClient } = require('@supabase/supabase-js');
 
 // Verify environment variables
