@@ -12,7 +12,9 @@ export async function GET(request: Request) {
   try {
     const results = await gplay.search({
       term: q,
-      num: 50, // Enough to populate a decent search results page (increased for more results)
+      num: 120, // Maximize the limit to fetch as many as possible
+      country: "us",
+      lang: "en"
     });
 
     const formattedResults = results.map((app: any) => ({
