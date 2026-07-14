@@ -6,14 +6,6 @@ import { useState } from "react";
 export default function TopNavbar() {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
-  const toggleDropdown = (menu: string) => {
-    if (activeDropdown === menu) {
-      setActiveDropdown(null);
-    } else {
-      setActiveDropdown(menu);
-    }
-  };
-
   return (
     <div style={{background: "white", borderBottom: "1px solid #e2e8f0", position: "relative", zIndex: 50}}>
       {/* Main Navbar */}
@@ -32,9 +24,8 @@ export default function TopNavbar() {
           <nav style={{display: "flex", alignItems: "center", gap: "1.5rem", fontSize: "0.95rem", color: "#475569", fontWeight: 500}}>
             
             {/* Workspace Dropdown */}
-            <div style={{position: "relative"}}>
+            <div style={{position: "relative"}} onMouseEnter={() => setActiveDropdown("workspace")} onMouseLeave={() => setActiveDropdown(null)}>
               <button 
-                onClick={() => toggleDropdown("workspace")}
                 style={{background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.3rem", color: "#0f172a", fontWeight: activeDropdown === "workspace" ? 700 : 500, padding: "0.5rem"}}
               >
                 Workspace <span style={{fontSize: "0.7rem"}}>▼</span>
@@ -59,9 +50,8 @@ export default function TopNavbar() {
             </div>
 
             {/* AI Agents Dropdown */}
-            <div style={{position: "relative"}}>
+            <div style={{position: "relative"}} onMouseEnter={() => setActiveDropdown("ai_agents")} onMouseLeave={() => setActiveDropdown(null)}>
               <button 
-                onClick={() => toggleDropdown("ai_agents")}
                 style={{background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.3rem", color: "#0f172a", fontWeight: activeDropdown === "ai_agents" ? 700 : 500, padding: "0.5rem"}}
               >
                 🔥 AI Agents <span style={{fontSize: "0.7rem"}}>▼</span>
@@ -89,9 +79,8 @@ export default function TopNavbar() {
             </div>
 
             {/* Discover Dropdown */}
-            <div style={{position: "relative"}}>
+            <div style={{position: "relative"}} onMouseEnter={() => setActiveDropdown("discover")} onMouseLeave={() => setActiveDropdown(null)}>
               <button 
-                onClick={() => toggleDropdown("discover")}
                 style={{background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.3rem", color: "#0f172a", fontWeight: activeDropdown === "discover" ? 700 : 500, padding: "0.5rem"}}
               >
                 Discover <span style={{fontSize: "0.7rem"}}>▼</span>
@@ -114,9 +103,8 @@ export default function TopNavbar() {
             </div>
 
             {/* ASO Dropdown */}
-            <div style={{position: "relative"}}>
+            <div style={{position: "relative"}} onMouseEnter={() => setActiveDropdown("aso")} onMouseLeave={() => setActiveDropdown(null)}>
               <button 
-                onClick={() => toggleDropdown("aso")}
                 style={{background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.3rem", color: "#0f172a", fontWeight: activeDropdown === "aso" ? 700 : 500, padding: "0.5rem"}}
               >
                 ASO <span style={{fontSize: "0.7rem"}}>▼</span>
@@ -160,7 +148,7 @@ export default function TopNavbar() {
           </div>
           
           <button style={{background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.5rem", color: "#0f172a", fontWeight: 500}}>
-            Dabobot <span style={{fontSize: "0.7rem"}}>▼</span>
+            Login
           </button>
         </div>
       </div>
