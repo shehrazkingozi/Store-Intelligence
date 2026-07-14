@@ -232,21 +232,23 @@ export default function CategoriesPage() {
             
             <div style={{display: "flex", flexWrap: "wrap", gap: "0.5rem"}}>
               {data.keywordCloud?.map((kw: any) => (
-                <div key={kw.word} style={{
+                <div 
+                  key={kw.word}
                   onClick={() => setSelectedKeyword(selectedKeyword === kw.word ? null : kw.word)}
                   style={{
-                  padding: "0.4rem 0.8rem", 
-                  borderRadius: "20px", 
-                  background: selectedKeyword === kw.word ? "#4f46e5" : kw.movement > 0 ? "#ecfdf5" : kw.movement < 0 ? "#fef2f2" : "#f1f5f9",
-                  color: selectedKeyword === kw.word ? "#fff" : getMovementColor(kw.movement),
-                  fontSize: "0.9rem",
-                  fontWeight: "bold",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.3rem",
-                  cursor: "pointer",
-                  border: selectedKeyword === kw.word ? "2px solid #3730a3" : "2px solid transparent"
-                }}>
+                    padding: "0.4rem 0.8rem", 
+                    borderRadius: "20px", 
+                    background: selectedKeyword === kw.word ? "#4f46e5" : kw.movement > 0 ? "#ecfdf5" : kw.movement < 0 ? "#fef2f2" : "#f1f5f9",
+                    color: selectedKeyword === kw.word ? "#fff" : getMovementColor(kw.movement),
+                    fontSize: "0.9rem",
+                    fontWeight: "bold",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.3rem",
+                    cursor: "pointer",
+                    border: selectedKeyword === kw.word ? "2px solid #3730a3" : "2px solid transparent"
+                  }}
+                >
                   <span>{getMovementIcon(kw.movement)}</span> {kw.word} {kw.movement !== 0 && <span>{kw.movement > 0 ? `+${kw.movement}` : kw.movement}</span>}
                 </div>
               ))}
