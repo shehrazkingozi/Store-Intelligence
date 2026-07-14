@@ -3,9 +3,9 @@ import gplay from 'google-play-scraper';
 
 export async function GET(
   request: Request,
-  { params }: { params: { store: string; id: string } }
+  { params }: { params: Promise<{ store: string; id: string }> }
 ) {
-  const { store, id } = params;
+  const { store, id } = await params;
   if (store !== 'gplay') return NextResponse.json([]);
 
   try {
