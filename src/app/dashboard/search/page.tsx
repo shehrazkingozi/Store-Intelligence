@@ -1,178 +1,153 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { History, TrendingUp } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import TopNavbar from "@/components/TopNavbar";
 
-export default function SearchPage() {
+function formatInstalls(num: number | string) {
+  if (!num) return "N/A";
+  let n = typeof num === 'string' ? parseInt(num.toString().replace(/[^0-9]/g, '')) : num;
+  if (isNaN(n) || n === 0) return num.toString();
+
+  if (n >= 1000000000) {
+    let formatted = (n / 1000000000).toFixed(1);
+    return `~${formatted.replace('.0', '')}B`;
+  }
+  if (n >= 1000000) {
+    let formatted = (n / 1000000).toFixed(1);
+    return `~${formatted.replace('.0', '')}M`;
+  }
+  if (n >= 1000) {
+    let formatted = (n / 1000).toFixed(1);
+    return `~${formatted.replace('.0', '')}K`;
+  }
+  return `~${n}`;
+}
+
+function AppDetailsFetcher({ appId }: { appId: string }) {
+  const [data, setData] = useState<{ installs: string, released: string } | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    let fetched = false;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !fetched) {
+          fetched = true;
+          fetch(`/api/app-details?appId=${appId}`)
+            .then(res => res.json())
+            .then(resData => {
+              if (resData.success) {
+                const installsVal = resData.data.maxInstalls || resData.data.installs;
+                setData({
+                  installs: installsVal ? formatInstalls(installsVal) : "N/A",
+                  released: resData.data.released || "N/A"
+                });
+              } else {
+                setData({ installs: "N/A", released: "N/A" });
+              }
+            })
+            .catch(() => setData({ installs: "N/A", released: "N/A" }));
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "100px" }
+    );
+
+    observer.observe(ref.current);
+
+    return () => observer.disconnect();
+  }, [appId]);
+
   return (
-    <Suspense fallback={<main className="container"><div className="loading">Loading search...</div></main>}>
-      <SearchContent />
-    </Suspense>
+    <div ref={ref} style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid #f1f5f9", marginTop: "1rem", paddingTop: "0.8rem", fontSize: "0.85rem", color: "#0f172a", textAlign: "center" }}>
+      <div style={{ flex: 1, borderRight: "1px solid #f1f5f9" }}>
+        <div style={{ fontWeight: 600 }}>{data ? data.released : "Loading..."}</div>
+        <div style={{ color: "#64748b", fontSize: "0.75rem", marginTop: "2px" }}>Released</div>
+      </div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontWeight: 600 }}>{data ? data.installs : "Loading..."}</div>
+        <div style={{ color: "#64748b", fontSize: "0.75rem", marginTop: "2px" }}>Total Installs</div>
+      </div>
+    </div>
   );
 }
 
-function SearchContent() {
+export default function SearchPage() {
   const searchParams = useSearchParams();
-  const query = searchParams.get("q");
+  const q = searchParams.get("q") || "";
   
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  const generateHistoryData = () => {
-    if (!data) return [];
-    const baseInstalls = parseInt((data.installs || "0").replace(/[^0-9]/g, '')) || 10000;
-    const history = [];
-    let current = baseInstalls * 0.3; 
-    
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setMonth(d.getMonth() - i);
-      history.push({
-        month: d.toLocaleDateString('en-US', { month: 'short' }),
-        downloads: Math.floor(current)
-      });
-      current += (baseInstalls - current) / (i + 1) * (0.8 + Math.random() * 0.4);
-    }
-    return history;
-  };
+  const [results, setResults] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!query) {
-      setLoading(false);
+    if (!q) {
+      setIsLoading(false);
       return;
     }
     
-    fetch(`/api/search?q=${query}`)
+    setIsLoading(true);
+    fetch(`/api/search?q=${encodeURIComponent(q)}`)
       .then(res => res.json())
-      .then(result => {
-        if (result.success && result.data) {
-          setData(result.data);
-        } else {
-          setError(result.error || "App not found or failed to scrape live data.");
-        }
-        setLoading(false);
+      .then(data => {
+        if (data.success) setResults(data.data);
+        setIsLoading(false);
       })
-      .catch(err => {
-        setError(err.toString());
-        setLoading(false);
-      });
-  }, [query]);
+      .catch(() => setIsLoading(false));
+  }, [q]);
 
-  if (!query) return <main className="container"><h2>Enter an App ID in the sidebar to search.</h2></main>;
-  if (loading) return <main className="container"><div className="loading">📡 Live Scraping data for {query}...</div></main>;
-  
   return (
-    <main className="container">
-      <h1 className="title">Live Search Results</h1>
-      
-      {error && (
-        <div style={{background: "rgba(239, 68, 68, 0.2)", padding: "1rem", borderRadius: "0.5rem", color: "#f87171"}}>
-          {error}
+    <div style={{ minHeight: "100vh", background: "#f8fafc", fontFamily: "sans-serif" }}>
+      <TopNavbar />
+
+      <main style={{ maxWidth: "1200px", margin: "0 auto", padding: "2rem" }}>
+        <div style={{ marginBottom: "2rem" }}>
+          <h1 style={{ fontSize: "1.1rem", fontWeight: 500, color: "#64748b" }}>
+            {results.length} results for <span style={{ color: "black", fontWeight: 700 }}>"{q}"</span>
+          </h1>
         </div>
-      )}
 
-      {data && (
-        <div style={{animation: "fadeIn 0.5s ease-out"}}>
-          <div className="card" style={{maxWidth: "800px", margin: "0 auto 2rem", textAlign: "center", padding: "3rem"}}>
-            <img src={data.icon_url} alt={data.title} width={128} height={128} style={{borderRadius: "20%", margin: "0 auto 1rem", display: "block", objectFit: "cover"}} />
-            <h2 style={{fontSize: "2rem", marginBottom: "0.5rem"}}>{data.title}</h2>
-            <p style={{color: "var(--accent-color)", fontWeight: "bold", marginBottom: "2rem"}}>{data.developer}</p>
-            
-            <div className="ss-body" style={{display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", textAlign: "left"}}>
-              <div className="ss-stat" style={{background: "rgba(255,255,255,0.05)", padding: "1rem", borderRadius: "0.5rem"}}>
-                <div style={{color: "var(--text-muted)", fontSize: "0.85rem", textTransform: "uppercase"}}>Rating</div>
-                <div style={{fontSize: "1.2rem", fontWeight: "bold"}}>⭐ {data.rating} ({data.reviews_count} reviews)</div>
-              </div>
-              <div className="ss-stat" style={{background: "rgba(255,255,255,0.05)", padding: "1rem", borderRadius: "0.5rem"}}>
-                <div style={{color: "var(--text-muted)", fontSize: "0.85rem", textTransform: "uppercase"}}>Downloads</div>
-                <div style={{fontSize: "1.2rem", fontWeight: "bold"}}>⬇️ {data.installs}</div>
-              </div>
-              <div className="ss-stat" style={{background: "rgba(255,255,255,0.05)", padding: "1rem", borderRadius: "0.5rem"}}>
-                <div style={{color: "var(--text-muted)", fontSize: "0.85rem", textTransform: "uppercase"}}>Released</div>
-                <div style={{fontSize: "1.2rem", fontWeight: "bold"}}>{data.released || "Unknown"}</div>
-              </div>
-              <div className="ss-stat" style={{background: "rgba(255,255,255,0.05)", padding: "1rem", borderRadius: "0.5rem"}}>
-                <div style={{color: "var(--text-muted)", fontSize: "0.85rem", textTransform: "uppercase"}}>Updated (Unix)</div>
-                <div style={{fontSize: "1.2rem", fontWeight: "bold"}}>{data.updated || "Unknown"}</div>
-              </div>
-            </div>
-          </div>
-
-
-          <div className="card" style={{padding: "2rem", marginBottom: "3rem"}}>
-            <h3 style={{marginBottom: "1.5rem", display: "flex", alignItems: "center", gap: "0.5rem"}}>
-              <History size={20} color="#16a34a"/> 6-Month Download Trajectory (Simulated)
-            </h3>
-            <div style={{height: 300, width: "100%"}}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={generateHistoryData()} margin={{ top: 10, right: 30, left: 20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorDownloads" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#16a34a" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#16a34a" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                  <XAxis dataKey="month" stroke="#94a3b8" />
-                  <YAxis stroke="#94a3b8" tickFormatter={(value) => value >= 1000000 ? `${(value/1000000).toFixed(1)}M` : `${(value/1000).toFixed(0)}k`} />
-                  <Tooltip 
-                    contentStyle={{backgroundColor: '#1e293b', borderColor: '#334155', borderRadius: '8px', color: '#f8fafc'}}
-                    formatter={(value: any) => new Intl.NumberFormat('en-US').format(Number(value))}
-                  />
-                  <Area type="monotone" dataKey="downloads" stroke="#16a34a" fillOpacity={1} fill="url(#colorDownloads)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-          
-          <h2 className="title" style={{fontSize: "1.8rem", marginTop: "3rem", display: "flex", alignItems: "center", gap: "0.5rem"}}>
-            <TrendingUp size={24} color="#60a5fa" /> Advanced Keyword Report
-          </h2>
-          <p style={{color: "var(--text-muted)", marginBottom: "1rem"}}>Live AI analysis of ASO ranking opportunities for {data.title}.</p>
-          
-          <div className="data-table-container">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Keyword / Search Term</th>
-                  <th>Search Volume</th>
-                  <th>Difficulty Score</th>
-                  <th>Current Rank</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td style={{fontWeight: 600}}>{data.title.split(' ')[0].toLowerCase()} app</td>
-                  <td>125,000</td>
-                  <td><span className="difficulty-badge difficulty-high">High</span></td>
-                  <td>#1</td>
-                </tr>
-                <tr>
-                  <td style={{fontWeight: 600}}>best {data.title.split(' ')[0].toLowerCase()}</td>
-                  <td>45,300</td>
-                  <td><span className="difficulty-badge difficulty-med">Medium</span></td>
-                  <td>#4</td>
-                </tr>
-                <tr>
-                  <td style={{fontWeight: 600}}>free {data.title.split(' ')[0].toLowerCase()} download</td>
-                  <td>18,900</td>
-                  <td><span className="difficulty-badge difficulty-low">Low</span></td>
-                  <td>#12</td>
-                </tr>
-                <tr>
-                  <td style={{fontWeight: 600}}>apps by {data.developer.split(' ')[0]}</td>
-                  <td>8,200</td>
-                  <td><span className="difficulty-badge difficulty-low">Low</span></td>
-                  <td>#2</td>
-                </tr>
-              </tbody>
-            </table>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", color: "#475569", fontWeight: 600, fontSize: "0.85rem" }}>
+          <div>GAMES & APPS</div>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            Sort by 
+            <select style={{ padding: "0.4rem", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "0.85rem", background: "white" }}>
+              <option>Relevance</option>
+            </select>
           </div>
         </div>
-      )}
-    </main>
+
+        {isLoading ? (
+          <div style={{ textAlign: "center", padding: "3rem", color: "#64748b" }}>Loading search results...</div>
+        ) : results.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "3rem", color: "#64748b" }}>No results found.</div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "1.5rem" }}>
+            {results.map((app: any) => (
+              <div key={app.appId} style={{ background: "white", borderRadius: "12px", border: "1px solid #e2e8f0", padding: "1.2rem", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", position: "relative" }}>
+                <div style={{ display: "flex", gap: "1rem" }}>
+                  <img src={app.icon} style={{ width: "56px", height: "56px", borderRadius: "12px", objectFit: "cover", flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, fontSize: "1rem", color: "#0f172a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{app.title}</div>
+                    <div style={{ fontSize: "0.8rem", color: "#64748b", marginTop: "4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {app.developer} • {app.genre || "App"}
+                    </div>
+                  </div>
+                </div>
+                
+                <div style={{ position: "absolute", top: "1.2rem", right: "1.2rem", display: "flex", gap: "0.5rem" }}>
+                  <span style={{ fontSize: "1.1rem" }}>▶️</span>
+                  <span style={{ fontSize: "1.1rem", color: "#cbd5e1", cursor: "pointer" }}>🔖</span>
+                </div>
+
+                <AppDetailsFetcher appId={app.appId} />
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+    </div>
   );
 }

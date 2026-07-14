@@ -1,10 +1,48 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function TopNavbar() {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setShowSearchDropdown(false);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setIsSearching(true);
+      fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setSearchResults(data.data.slice(0, 8)); // Show top 8 in dropdown
+            setShowSearchDropdown(true);
+          }
+          setIsSearching(false);
+        })
+        .catch(() => setIsSearching(false));
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const handleSearchSubmit = (e?: React.KeyboardEvent) => {
+    if (e && e.key !== "Enter") return;
+    if (searchQuery.trim()) {
+      setShowSearchDropdown(false);
+      router.push(`/dashboard/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
   return (
     <div style={{background: "white", borderBottom: "1px solid #e2e8f0", position: "relative", zIndex: 50}}>
@@ -143,8 +181,93 @@ export default function TopNavbar() {
             <input 
               type="text" 
               placeholder="Search games, apps, publishers..." 
-              style={{padding: "0.5rem 1rem", borderRadius: "20px", border: "1px solid #e2e8f0", width: "250px", fontSize: "0.85rem", background: "#f8fafc"}}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleSearchSubmit}
+              onFocus={() => { if(searchResults.length > 0) setShowSearchDropdown(true); }}
+              onBlur={() => setTimeout(() => setShowSearchDropdown(false), 200)}
+              style={{
+                padding: "0.5rem 1rem", 
+                borderRadius: "20px", 
+                border: "1px solid #e2e8f0", 
+                width: "300px", 
+                fontSize: "0.85rem", 
+                background: "#f8fafc",
+                outline: "none"
+              }}
             />
+            {showSearchDropdown && (
+              <div style={{
+                position: "absolute", 
+                top: "100%", 
+                right: 0, 
+                width: "450px", 
+                background: "white", 
+                border: "1px solid #e2e8f0", 
+                borderRadius: "8px", 
+                boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)", 
+                marginTop: "0.5rem", 
+                overflow: "hidden",
+                zIndex: 100
+              }}>
+                {isSearching ? (
+                  <div style={{padding: "1rem", textAlign: "center", color: "#64748b", fontSize: "0.9rem"}}>Searching...</div>
+                ) : searchResults.length > 0 ? (
+                  <>
+                    <div style={{maxHeight: "400px", overflowY: "auto"}}>
+                      {searchResults.map((app) => (
+                        <div 
+                          key={app.appId} 
+                          onClick={() => {
+                            setSearchQuery("");
+                            setShowSearchDropdown(false);
+                          }}
+                          style={{
+                            display: "flex", 
+                            alignItems: "center", 
+                            gap: "1rem", 
+                            padding: "0.75rem 1rem", 
+                            borderBottom: "1px solid #f1f5f9",
+                            cursor: "pointer",
+                            textDecoration: "none",
+                            color: "inherit"
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f8fafc")}
+                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                        >
+                          <img src={app.icon} style={{width: "40px", height: "40px", borderRadius: "8px", objectFit: "cover"}} />
+                          <div style={{flex: 1, minWidth: 0}}>
+                            <div style={{fontWeight: 600, fontSize: "0.9rem", color: "#0f172a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>{app.title}</div>
+                            <div style={{fontSize: "0.75rem", color: "#64748b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>{app.developer}</div>
+                          </div>
+                          <div style={{display: "flex", alignItems: "center", gap: "0.5rem"}}>
+                            <span style={{fontSize: "1.2rem"}}>▶️</span>
+                            <span style={{fontSize: "0.7rem", background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px", color: "#64748b"}}>App</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div 
+                      onClick={() => handleSearchSubmit()}
+                      style={{
+                        padding: "0.75rem", 
+                        textAlign: "center", 
+                        background: "#f8fafc", 
+                        borderTop: "1px solid #e2e8f0", 
+                        color: "#4f46e5", 
+                        fontSize: "0.85rem", 
+                        fontWeight: 600, 
+                        cursor: "pointer"
+                      }}
+                    >
+                      See all results for "{searchQuery}" →
+                    </div>
+                  </>
+                ) : (
+                  <div style={{padding: "1rem", textAlign: "center", color: "#64748b", fontSize: "0.9rem"}}>No results found</div>
+                )}
+              </div>
+            )}
           </div>
           
           <button style={{background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.5rem", color: "#0f172a", fontWeight: 500}}>
