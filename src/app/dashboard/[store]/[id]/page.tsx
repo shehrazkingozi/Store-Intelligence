@@ -45,10 +45,10 @@ export default function AppDetails() {
       setLoading(true);
       try {
         const [appRes, kwRes, histRes, compRes] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/app/${store}/${id}`),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/app/${store}/${id}/keywords`),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/app/${store}/${id}/history`),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/app/${store}/${id}/competitors`)
+          fetch(`/api/app/${store}/${id}`),
+          fetch(`/api/app/${store}/${id}/keywords`),
+          fetch(`/api/app/${store}/${id}/history`),
+          fetch(`/api/app/${store}/${id}/competitors`)
         ]);
         
         if (appRes.ok) setApp(await appRes.json());
