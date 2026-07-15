@@ -34,7 +34,7 @@ export async function GET(request: Request) {
 
     const topNewFree = await gplay.list({
       category: category as any,
-      collection: 'TOP_FREE' as any, // NEW_FREE is often deprecated/unstable in GPlay, fallback to TOP_FREE or empty
+      collection: gplay.collection.NEW_FREE || 'NEW_FREE' as any,
       num: 20,
       country: country,
     }).catch(() => []);
