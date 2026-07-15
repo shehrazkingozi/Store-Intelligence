@@ -28,26 +28,30 @@ export async function GET(request: Request) {
     const topFreeAll = await gplay.list({
       category: category as any,
       collection: 'TOP_FREE' as any,
-      num: 120,
+      num: 150,
       country: country,
     });
     
     const topFree = topFreeAll.slice(0, 100);
 
-    let topNewFree = await gplay.list({
-      category: category as any,
-      collection: 'NEW_FREE' as any,
-      num: 20,
-      country: country,
-    }).catch(() => []);
+    // Fetch details for the top 80 to get release dates and identify the genuinely newest
+    // To avoid rate limiting and long latency, we limit to the top 80 candidates.
+    const candidateApps = topFreeAll.slice(0, 80);
+    const appDetailsPromises = candidateApps.map((app: any) => 
+      gplay.app({ appId: app.appId }).catch(() => null)
+    );
+    
+    const detailedApps = await Promise.all(appDetailsPromises);
+    const validDetailedApps = detailedApps.filter(app => app && app.released);
+    
+    // Sort by release date descending (newest first)
+    validDetailedApps.sort((a, b) => {
+      const dateA = new Date(a.released).getTime();
+      const dateB = new Date(b.released).getTime();
+      return (isNaN(dateB) ? 0 : dateB) - (isNaN(dateA) ? 0 : dateA);
+    });
 
-    if (topNewFree.length === 0 && topFreeAll.length > 100) {
-      // Google Play officially deprecated NEW_FREE charts. 
-      // As a fallback to keep the UI populated and distinct from Top Free,
-      // we use apps ranked 101-120. Once the daily cron database has enough history, 
-      // this should be replaced with a DB query filtering by release_date.
-      topNewFree = topFreeAll.slice(100, 120);
-    }
+    const topNewFreeRaw = validDetailedApps.slice(0, 20);
 
     const formatApp = (app: any) => ({
       appId: app.appId,
@@ -58,13 +62,18 @@ export async function GET(request: Request) {
       installsText: app.installs || app.scoreText || "100K+",
     });
 
+    // If for some reason we couldn't fetch details, we use the fallback
+    const topNewFree = topNewFreeRaw.length > 0 
+      ? topNewFreeRaw.map(formatApp) 
+      : topFreeAll.slice(100, 120).map(formatApp);
+
     const formattedTopFree = topFree.map(formatApp);
 
     return NextResponse.json({
       success: true,
       data: {
         topFree: formattedTopFree,
-        topNewFree: topNewFree.map(formatApp),
+        topNewFree: topNewFree,
         biggestMovers: [],
         keywordCloud: extractKeywords(topFree)
       }
