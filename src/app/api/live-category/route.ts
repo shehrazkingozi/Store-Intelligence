@@ -25,19 +25,29 @@ export async function GET(request: Request) {
   const country = searchParams.get('country') || 'us';
 
   try {
-    const topFree = await gplay.list({
+    const topFreeAll = await gplay.list({
       category: category as any,
       collection: 'TOP_FREE' as any,
-      num: 100,
+      num: 120,
       country: country,
     });
+    
+    const topFree = topFreeAll.slice(0, 100);
 
-    const topNewFree = await gplay.list({
+    let topNewFree = await gplay.list({
       category: category as any,
       collection: 'NEW_FREE' as any,
       num: 20,
       country: country,
     }).catch(() => []);
+
+    if (topNewFree.length === 0 && topFreeAll.length > 100) {
+      // Google Play officially deprecated NEW_FREE charts. 
+      // As a fallback to keep the UI populated and distinct from Top Free,
+      // we use apps ranked 101-120. Once the daily cron database has enough history, 
+      // this should be replaced with a DB query filtering by release_date.
+      topNewFree = topFreeAll.slice(100, 120);
+    }
 
     const formatApp = (app: any) => ({
       appId: app.appId,
