@@ -46,8 +46,8 @@ export async function GET(request: Request) {
     
     // Sort by release date descending (newest first)
     validDetailedApps.sort((a, b) => {
-      const dateA = new Date(a.released).getTime();
-      const dateB = new Date(b.released).getTime();
+      const dateA = new Date(a?.released || 0).getTime();
+      const dateB = new Date(b?.released || 0).getTime();
       return (isNaN(dateB) ? 0 : dateB) - (isNaN(dateA) ? 0 : dateA);
     });
 
