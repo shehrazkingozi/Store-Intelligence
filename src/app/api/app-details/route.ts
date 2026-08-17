@@ -95,11 +95,9 @@ export async function GET(request: Request) {
       timestamp: now
     };
 
-    // Background Database Saving (Fire and Forget)
-    (async () => {
-      try {
-        if (!supabase) return;
-
+    // Await Database Saving to prevent Vercel from killing the process
+    try {
+      if (supabase) {
         // Check if title or description changed
         const { data: existingApp } = await supabase
           .from('apps')
@@ -146,10 +144,10 @@ export async function GET(request: Request) {
           ratings: details.ratings,
           reviews: details.reviews,
         }, { onConflict: 'app_id,date' });
-      } catch (dbError) {
-        console.error("Failed to save to database in background", dbError);
       }
-    })();
+    } catch (dbError) {
+      console.error("Failed to save to database", dbError);
+    }
 
     return NextResponse.json({
       success: true,

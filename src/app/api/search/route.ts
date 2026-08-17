@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import gplay from 'google-play-scraper';
 import store from 'app-store-scraper';
+import { supabase } from '@/lib/supabase';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -108,6 +109,31 @@ export async function GET(request: Request) {
       }
       return (b.score || 0) - (a.score || 0);
     });
+
+    // Bulk insert searched apps into tracking queue
+    try {
+      if (supabase && combined.length > 0) {
+        // Prepare minimal data for tracking queue
+        const appsToQueue = combined.map(app => ({
+          app_id: app.appId.toString(),
+          title: app.title,
+          developer: app.developer,
+          icon: app.icon,
+          // Do not overwrite existing full details if they exist
+          updated_at: new Date().toISOString()
+        }));
+        
+        // Upsert in batches of 100 to avoid request too large errors
+        for (let i = 0; i < appsToQueue.length; i += 100) {
+          const batch = appsToQueue.slice(i, i + 100);
+          // onConflict 'app_id' ensures we don't insert duplicates.
+          // By ignoring conflicts, we don't overwrite existing full descriptions/stats.
+          await supabase.from('apps').upsert(batch, { onConflict: 'app_id', ignoreDuplicates: true });
+        }
+      }
+    } catch (dbError) {
+      console.error("Failed to queue searched apps:", dbError);
+    }
 
     return NextResponse.json({
       success: true,

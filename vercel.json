@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/process-queue",
+      "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/cron/fetch-top-charts",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}
